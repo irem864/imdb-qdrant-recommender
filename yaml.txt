@@ -1,0 +1,37 @@
+version: '3.8'
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+    ports:
+      - "6333:6333"   
+      - "6334:6334"  
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRACEFUL_SHUTDOWN=true
+
+  backend:
+    build: ./backend
+    container_name: imdb-backend
+    restart: unless-stopped
+    depends_on:
+      - qdrant
+    ports:
+      - "8000:8000"
+    environment:
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6333
+
+  nginx:
+    build: ./nginx
+    container_name: imdb-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  qdrant_storage:
